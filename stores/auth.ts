@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { supabase } from '~/utils/supabase'
 
 interface User {
   id: string
@@ -26,11 +25,11 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async register(username: string, email: string, password: string) {
-      console.log('Starting registration in store...') // Debug log
-
+      const { $supabase } = useNuxtApp()
+      
       try {
         // 1. Create the user in Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const { data: authData, error: authError } = await $supabase.auth.signUp({
           email,
           password,
           options: {
@@ -38,19 +37,14 @@ export const useAuthStore = defineStore('auth', {
           }
         })
 
-        console.log('Auth response:', authData) // Debug log
-
-        if (authError) {
-          console.error('Auth error:', authError) // Debug log
-          throw authError
-        }
+        if (authError) throw authError
 
         if (!authData.user) {
           throw new Error('No user data returned')
         }
 
         // 2. Create the user profile
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error: profileError } = await $supabase
           .from('profiles')
           .insert([
             {
@@ -67,19 +61,14 @@ export const useAuthStore = defineStore('auth', {
           .select()
           .single()
 
-        console.log('Profile created:', profile) // Debug log
-
-        if (profileError) {
-          console.error('Profile error:', profileError) // Debug log
-          throw profileError
-        }
+        if (profileError) throw profileError
 
         this.user = profile
         this.isAuthenticated = true
 
-        return profile // Return the profile so we know it succeeded
+        return profile
       } catch (error: any) {
-        console.error('Store registration error:', error) // Debug log
+        console.error('Store registration error:', error)
         throw error
       }
     },
