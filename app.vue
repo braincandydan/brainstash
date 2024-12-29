@@ -14,35 +14,35 @@ import TheHeader from '~/components/layout/TheHeader.vue'
 const auth = useAuthStore()
 
 onMounted(async () => {
-  // Check for existing session on page load
+  // Check initial session
   const { data: { session } } = await supabase.auth.getSession()
   
-  if (session) {
-    // Get user profile
+  if (session?.user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
       .single()
     
-    auth.user = profile
-    auth.isAuthenticated = true
+    if (profile) {
+      auth.user = profile
+      auth.isAuthenticated = true
+    }
   }
 
   // Listen for auth changes
   supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth state changed:', event)
-    
-    if (session) {
-      // Get user profile
+    if (session?.user) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single()
       
-      auth.user = profile
-      auth.isAuthenticated = true
+      if (profile) {
+        auth.user = profile
+        auth.isAuthenticated = true
+      }
     } else {
       auth.user = null
       auth.isAuthenticated = false

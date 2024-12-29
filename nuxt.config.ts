@@ -4,6 +4,9 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt'
   ],
+  buildModules: [
+    '@pinia/nuxt'
+  ],
   pinia: {
     autoImports: ['defineStore', 'storeToRefs']
   },

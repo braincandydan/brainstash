@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
+import { supabase } from '~/utils/supabase'
 
 interface User {
-  id?: string
+  id: string
   username: string
   email: string
   bio?: string
-  stats?: {
+  stats: {
     collections: number
     bookmarks: number
     followers: number
@@ -24,93 +25,86 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   actions: {
-    async login(email: string, password: string) {
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, password })
-        })
-
-        if (!response.ok) throw new Error('Login failed')
-
-        const data = await response.json()
-        localStorage.setItem('token', data.token)
-        this.user = data.user
-        this.isAuthenticated = true
-      } catch (error) {
-        console.error('Login error:', error)
-        throw error
-      }
-    },
-
     async register(username: string, email: string, password: string) {
       try {
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ username, email, password })
+        // 1. Create the user in Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { username } // Store username in user metadata
+          }
         })
 
-        if (!response.ok) throw new Error('Registration failed')
+        if (authError) throw authError
 
-        const data = await response.json()
-        localStorage.setItem('token', data.token)
-        this.user = data.user
-        this.isAuthenticated = true
-      } catch (error) {
+        if (authData.user) {
+          // 2. Create the user profile
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: authData.user.id,
+                username,
+                email,
+                stats: {
+                  collections: 0,
+                  bookmarks: 0,
+                  followers: 0
+                }
+              }
+            ])
+            .select()
+            .single()
+
+          if (profileError) throw profileError
+
+          this.user = profile
+          this.isAuthenticated = true
+        }
+      } catch (error: any) {
         console.error('Registration error:', error)
         throw error
       }
     },
 
-    async fetchProfile() {
+    async login(email: string, password: string) {
       try {
-        const response = await fetch('/api/users/profile', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+        const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password
         })
-        
-        if (!response.ok) throw new Error('Failed to fetch profile')
-        
-        const data = await response.json()
-        this.user = data
-      } catch (error) {
-        console.error('Error fetching profile:', error)
+
+        if (authError) throw authError
+
+        if (user) {
+          // Get user profile
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+
+          if (profileError) throw profileError
+
+          this.user = profile
+          this.isAuthenticated = true
+        }
+      } catch (error: any) {
+        console.error('Login error:', error)
         throw error
       }
     },
 
-    async updateProfile(profileData: Partial<User>) {
+    async logout() {
       try {
-        const response = await fetch('/api/users/profile', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify(profileData)
-        })
-
-        if (!response.ok) throw new Error('Failed to update profile')
-
-        const data = await response.json()
-        this.user = data
-      } catch (error) {
-        console.error('Error updating profile:', error)
+        await supabase.auth.signOut()
+        this.user = null
+        this.isAuthenticated = false
+      } catch (error: any) {
+        console.error('Logout error:', error)
         throw error
       }
-    },
-
-    logout() {
-      localStorage.removeItem('token')
-      this.user = null
-      this.isAuthenticated = false
     }
   }
 }) 
