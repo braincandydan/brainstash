@@ -4,14 +4,27 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt'
   ],
+
   buildModules: [
     '@pinia/nuxt'
   ],
+
   pinia: {
     autoImports: ['defineStore', 'storeToRefs']
   },
+
   devtools: { enabled: true },
+
   nitro: {
     preset: 'vercel'
-  }
+  },
+
+  runtimeConfig: {
+    public: {
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY
+    }
+  },
+
+  compatibilityDate: '2024-12-29'
 })
