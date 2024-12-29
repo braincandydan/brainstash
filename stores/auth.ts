@@ -26,44 +26,60 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async register(username: string, email: string, password: string) {
+      console.log('Starting registration in store...') // Debug log
+
       try {
         // 1. Create the user in Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { username } // Store username in user metadata
+            data: { username }
           }
         })
 
-        if (authError) throw authError
+        console.log('Auth response:', authData) // Debug log
 
-        if (authData.user) {
-          // 2. Create the user profile
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: authData.user.id,
-                username,
-                email,
-                stats: {
-                  collections: 0,
-                  bookmarks: 0,
-                  followers: 0
-                }
-              }
-            ])
-            .select()
-            .single()
-
-          if (profileError) throw profileError
-
-          this.user = profile
-          this.isAuthenticated = true
+        if (authError) {
+          console.error('Auth error:', authError) // Debug log
+          throw authError
         }
+
+        if (!authData.user) {
+          throw new Error('No user data returned')
+        }
+
+        // 2. Create the user profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: authData.user.id,
+              username,
+              email,
+              stats: {
+                collections: 0,
+                bookmarks: 0,
+                followers: 0
+              }
+            }
+          ])
+          .select()
+          .single()
+
+        console.log('Profile created:', profile) // Debug log
+
+        if (profileError) {
+          console.error('Profile error:', profileError) // Debug log
+          throw profileError
+        }
+
+        this.user = profile
+        this.isAuthenticated = true
+
+        return profile // Return the profile so we know it succeeded
       } catch (error: any) {
-        console.error('Registration error:', error)
+        console.error('Store registration error:', error) // Debug log
         throw error
       }
     },

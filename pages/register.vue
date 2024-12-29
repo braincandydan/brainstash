@@ -45,8 +45,8 @@
             required
           >
         </div>
-        <div v-if="error" class="text-red-500 text-sm">
-          {{ error }} 
+        <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {{ error }}
         </div>
         <button 
           type="submit"
@@ -83,23 +83,28 @@ const isLoading = ref(false)
 
 const handleSubmit = async () => {
   error.value = ''
+  isLoading.value = true
   
-  // Basic validation
-  if (password.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match'
-    return
-  }
-
-  if (password.value.length < 8) {
-    error.value = 'Password must be at least 8 characters'
-    return
-  }
-
   try {
-    isLoading.value = true
+    // Basic validation
+    if (password.value !== confirmPassword.value) {
+      throw new Error('Passwords do not match')
+    }
+
+    if (password.value.length < 8) {
+      throw new Error('Password must be at least 8 characters')
+    }
+
+    console.log('Starting registration...') // Debug log
+
     await auth.register(username.value, email.value, password.value)
-    router.push('/') // Redirect to home page after successful registration
+    
+    console.log('Registration successful!') // Debug log
+    
+    // Only redirect if we successfully registered
+    router.push('/')
   } catch (e) {
+    console.error('Registration error:', e) // Debug log
     error.value = e.message || 'Registration failed. Please try again.'
   } finally {
     isLoading.value = false
