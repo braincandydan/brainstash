@@ -8,17 +8,17 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
-import { supabase } from '~/utils/supabase'
 import TheHeader from '~/components/layout/TheHeader.vue'
 
+const { $supabase } = useNuxtApp()
 const auth = useAuthStore()
 
 onMounted(async () => {
   // Check initial session
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await $supabase.auth.getSession()
   
   if (session?.user) {
-    const { data: profile } = await supabase
+    const { data: profile } = await $supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
@@ -31,9 +31,9 @@ onMounted(async () => {
   }
 
   // Listen for auth changes
-  supabase.auth.onAuthStateChange(async (event, session) => {
+  $supabase.auth.onAuthStateChange(async (event, session) => {
     if (session?.user) {
-      const { data: profile } = await supabase
+      const { data: profile } = await $supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)

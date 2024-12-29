@@ -5,10 +5,6 @@ export default defineNuxtConfig({
     '@pinia/nuxt'
   ],
 
-  buildModules: [
-    '@pinia/nuxt'
-  ],
-
   pinia: {
     autoImports: ['defineStore', 'storeToRefs']
   },
@@ -24,7 +20,5 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY
     }
-  },
-
-  compatibilityDate: '2024-12-29'
+  }
 })
