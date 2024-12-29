@@ -8,10 +8,6 @@ export default defineNuxtConfig({
     autoImports: ['defineStore', 'storeToRefs']
   },
   devtools: { enabled: true },
-  compatibilityDate: '2024-12-25',
-  build: {
-    transpile: ['pinia-plugin-persistedstate']
-  },
   nitro: {
     preset: 'vercel'
   }
